@@ -1,4 +1,5 @@
-package auth
+// parkjunwoo.com/microstral/pkg/auth/cognito/cognito.go
+package cognito
 
 import (
 	"crypto/rsa"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"parkjunwoo.com/microstral/pkg/auth"
 )
 
 type CognitoAuthenticator struct {
@@ -25,10 +27,10 @@ type CognitoAuthenticator struct {
 	once sync.Once
 }
 
-func (ca *CognitoAuthenticator) Authenticate(c *gin.Context) (Claims, bool, error) {
+func (ca *CognitoAuthenticator) Authenticate(c *gin.Context) (auth.Claims, bool, error) {
 	tokenStr := extractBearerToken(c.Request)
 	if tokenStr == "" {
-		return Claims{
+		return auth.Claims{
 			UserID: "guest",
 			Email:  "",
 			Roles:  []string{"Guest"},
@@ -37,15 +39,15 @@ func (ca *CognitoAuthenticator) Authenticate(c *gin.Context) (Claims, bool, erro
 
 	token, err := jwt.Parse(tokenStr, ca.keyFunc)
 	if err != nil || !token.Valid {
-		return Claims{}, false, errors.New("invalid token")
+		return auth.Claims{}, false, errors.New("invalid token")
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return Claims{}, false, errors.New("invalid claims")
+		return auth.Claims{}, false, errors.New("invalid claims")
 	}
 
-	return Claims{
+	return auth.Claims{
 		UserID: claims["sub"].(string),
 		Email:  claims["email"].(string),
 		Roles:  parseRoles(claims),

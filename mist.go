@@ -5,6 +5,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -59,8 +64,108 @@ func New(opaPath string, tls bool) (*Mist, error) {
 	return s, nil
 }
 
-func (s *Mist) Use(middleware ...gin.HandlerFunc) gin.IRoutes {
-	return s.router.Use(middleware...)
+// Run: 서버 실행
+func (s *Mist) Run() error {
+	errCh := make(chan error, 2)
+	var httpsServer, httpServer *http.Server
+
+	if s.cfg.tls {
+		httpsServer = &http.Server{
+			Addr:    fmt.Sprintf(":%d", s.cfg.httpsport),
+			Handler: s.router,
+		}
+		httpServer = &http.Server{
+			Addr: fmt.Sprintf(":%d", s.cfg.httpport),
+			Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				target := "https://" + r.Host + r.URL.RequestURI()
+				http.Redirect(w, r, target, http.StatusMovedPermanently)
+			}),
+		}
+
+		go func() {
+			log.Println("Starting HTTPS server...")
+			if err := httpsServer.ListenAndServeTLS(s.cfg.fullchain, s.cfg.privkey); err != nil && err != http.ErrServerClosed {
+				errCh <- err
+			}
+		}()
+		go func() {
+			log.Println("Starting HTTP→HTTPS redirect server...")
+			if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				errCh <- err
+			}
+		}()
+	} else {
+		httpServer = &http.Server{
+			Addr:    fmt.Sprintf(":%d", s.cfg.httpport),
+			Handler: s.router,
+		}
+		go func() {
+			log.Println("Starting HTTP server...")
+			if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				errCh <- err
+			}
+		}()
+	}
+
+	// Graceful shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	select {
+	case <-quit:
+		log.Println("now shutting down server...")
+	case err := <-errCh:
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	defer func() {
+		for _, conn := range s.conns {
+			if err := conn.Close(); err != nil {
+				log.Println(err)
+			}
+		}
+	}()
+
+	if s.cfg.tls {
+		if httpsServer != nil {
+			if err := httpsServer.Shutdown(ctx); err != nil {
+				log.Printf("HTTPS shutdown error: %v", err)
+			}
+		}
+	}
+	if httpServer != nil {
+		if err := httpServer.Shutdown(ctx); err != nil {
+			log.Printf("HTTP shutdown error: %v", err)
+		}
+	}
+
+	log.Println("completed server shutdown")
+	return nil
+}
+
+func (s *Mist) GetHost() string {
+	return s.cfg.host
+}
+
+func (s *Mist) GetHTTPSPort() int {
+	return s.cfg.httpsport
+}
+
+func (s *Mist) GetHTTPPort() int {
+	return s.cfg.httpport
+}
+
+func (s *Mist) GetRouter() *gin.Engine {
+	return s.router
+}
+
+func (s *Mist) GetHTTP() *mttp.Client {
+	return s.httpc
+}
+
+func (s *Mist) Use(handlers ...gin.HandlerFunc) gin.IRoutes {
+	return s.router.Use(handlers...)
 }
 
 func (s *Mist) GET(relativePath string, handlers ...gin.HandlerFunc) gin.IRoutes {

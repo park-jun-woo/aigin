@@ -1,4 +1,4 @@
-// https://parkjunwoo.com/microstral/pkg/middleware/opa.go
+// parkjunwoo.com/microstral/pkg/middleware/opa.go
 package middleware
 
 import (
@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/open-policy-agent/opa/v1/rego"
+	"parkjunwoo.com/microstral/pkg/auth"
 	"parkjunwoo.com/microstral/pkg/file"
 )
 
@@ -43,10 +44,19 @@ func OPA(path string) gin.HandlerFunc {
 			return
 		}
 
+		claimsRaw, exists := c.Get("claims")
+		var claims auth.Claims
+		if exists && claimsRaw != nil {
+			claims = claimsRaw.(auth.Claims)
+		} else {
+			claims = auth.Claims{UserID: "guest", Roles: []string{"Guest"}}
+		}
+
 		input := map[string]interface{}{
-			"method": c.Request.Method,
 			"path":   c.Request.URL.Path,
-			"user":   c.GetHeader("X-User"),
+			"method": c.Request.Method,
+			"userID": claims.UserID,
+			"roles":  claims.Roles,
 		}
 
 		ctx := context.Background()

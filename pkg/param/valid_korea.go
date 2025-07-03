@@ -1,4 +1,4 @@
-// https://parkjunwoo.com/microstral/pkg/param/valid_korea.go
+// parkjunwoo.com/microstral/pkg/param/valid_korea.go
 package param
 
 import (

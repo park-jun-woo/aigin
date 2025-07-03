@@ -1,4 +1,4 @@
-// https://parkjunwoo.com/microstral/pkg/param/valid.go
+// parkjunwoo.com/microstral/pkg/param/valid.go
 package param
 
 type ValidFunc func(value string) (bool, error)

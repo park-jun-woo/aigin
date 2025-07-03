@@ -1,4 +1,4 @@
-// https://parkjunwoo.com/microstral/pkg/mttp/client.go
+// parkjunwoo.com/microstral/pkg/mttp/client.go
 package mttp
 
 import (

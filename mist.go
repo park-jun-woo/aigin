@@ -1,4 +1,4 @@
-// https://parkjunwoo.com/microstral/mist.go
+// parkjunwoo.com/microstral/mist.go
 package mist
 
 import (
@@ -11,7 +11,6 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"parkjunwoo.com/microstral/pkg/env"
-	"parkjunwoo.com/microstral/pkg/middleware"
 	"parkjunwoo.com/microstral/pkg/mttp"
 	"parkjunwoo.com/microstral/pkg/services"
 )
@@ -36,7 +35,7 @@ type Mist struct {
 }
 
 // New: Mist 서버 생성자
-func New(opaPath string, tls bool, useMiddleware bool) (*Mist, error) {
+func New(opaPath string, tls bool) (*Mist, error) {
 	httpc := mttp.NewClient()
 
 	s := &Mist{
@@ -53,20 +52,15 @@ func New(opaPath string, tls bool, useMiddleware bool) (*Mist, error) {
 		httpc:  httpc,
 	}
 
-	if useMiddleware {
-		// CORS 미들웨어 적용
-		s.router.Use(middleware.Origin())
-		// 인증 미들웨어 적용
-		s.router.Use(middleware.Auth())
-		// 정책 미들웨어 적용
-		s.router.Use(middleware.OPA(s.cfg.opaPath))
-	}
-
 	// 헬스체크 엔드포인트
 	s.GET("/healthcheck", nil, services.Healthcheck)
 	s.GET("/live", nil, services.Healthcheck)
 
 	return s, nil
+}
+
+func (s *Mist) Use(middleware ...gin.HandlerFunc) gin.IRoutes {
+	return s.router.Use(middleware...)
 }
 
 func (s *Mist) GET(relativePath string, handlers ...gin.HandlerFunc) gin.IRoutes {

@@ -1,4 +1,4 @@
-// https://parkjunwoo.com/microstral/pkg/param/param.go
+// parkjunwoo.com/microstral/pkg/param/param.go
 package param
 
 import (

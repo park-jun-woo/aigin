@@ -1,4 +1,4 @@
-// https://parkjunwoo.com/microstral/pkg/middleware/origin.go
+// parkjunwoo.com/microstral/pkg/middleware/origin.go
 package middleware
 
 import (

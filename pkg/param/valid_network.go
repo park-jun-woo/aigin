@@ -1,4 +1,4 @@
-// https://parkjunwoo.com/microstral/pkg/param/valid_network.go
+// parkjunwoo.com/microstral/pkg/param/valid_network.go
 package param
 
 import (

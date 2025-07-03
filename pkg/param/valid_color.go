@@ -1,4 +1,4 @@
-// https://parkjunwoo.com/microstral/pkg/param/valid_color.go
+// parkjunwoo.com/microstral/pkg/param/valid_color.go
 package param
 
 import (

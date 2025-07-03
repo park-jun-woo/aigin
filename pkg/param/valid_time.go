@@ -1,4 +1,4 @@
-// https://parkjunwoo.com/microstral/pkg/param/valid_time.go
+// parkjunwoo.com/microstral/pkg/param/valid_time.go
 package param
 
 import (

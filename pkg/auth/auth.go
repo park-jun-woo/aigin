@@ -14,3 +14,13 @@ type Claims struct {
 	Email  string
 	Extra  map[string]interface{}
 }
+
+func GetClaims(c *gin.Context) Claims {
+	claimsRaw, exists := c.Get("claims")
+	if exists && claimsRaw != nil {
+		if claims, ok := claimsRaw.(Claims); ok {
+			return claims
+		}
+	}
+	return Claims{UserID: "", Roles: []string{"Guest"}}
+}

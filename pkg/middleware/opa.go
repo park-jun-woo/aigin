@@ -44,13 +44,7 @@ func OPA(path string) gin.HandlerFunc {
 			return
 		}
 
-		claimsRaw, exists := c.Get("claims")
-		var claims auth.Claims
-		if exists && claimsRaw != nil {
-			claims = claimsRaw.(auth.Claims)
-		} else {
-			claims = auth.Claims{UserID: "guest", Roles: []string{"Guest"}}
-		}
+		claims := auth.GetClaims(c)
 
 		input := map[string]interface{}{
 			"path":   c.Request.URL.Path,

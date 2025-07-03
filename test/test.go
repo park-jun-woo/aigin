@@ -14,12 +14,15 @@ func main() {
 		panic(err)
 	}
 
-	authenticator := cognito.New(
-		"ap-northeast-2", "userpoolid", "clientid",
+	authenticator, err := cognito.New(
+		"ap-northeast-2", "userpoolid", "clientid", "client secret",
 		"https://yourdomain.com/signin-callback",
 		"https://yourdomain.com/signout-callback",
 		"code",
 	)
+	if err != nil {
+		panic(err)
+	}
 
 	s.Use(middleware.Origin())
 	s.Use(middleware.Auth(authenticator))

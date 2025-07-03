@@ -2,12 +2,16 @@
 package cognito
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 	"sync"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"parkjunwoo.com/microstral/pkg/auth"
@@ -17,20 +21,31 @@ type Auth struct {
 	Region             string
 	UserPoolID         string
 	ClientID           string
+	ClientSecret       string
 	SigninCallbackURI  string
 	SignoutCallbackURI string
 	ResponseType       string
 	JWKSUrl            string
 
-	jwks *JWKS
-	once sync.Once
+	jwks          *JWKS
+	awsCfg        aws.Config
+	cognitoClient *cognitoidentityprovider.Client
+	once          sync.Once
 }
 
-func New(region, userPoolID, clientID, signinCallbackURI, signoutCallbackURI, responseType string) *Auth {
+func New(region, userPoolID, clientID, clientSecret, signinCallbackURI, signoutCallbackURI, responseType string) (*Auth, error) {
+	awsCfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
+	if err != nil {
+		return nil, err
+	}
+
+	cognitoClient := cognitoidentityprovider.NewFromConfig(awsCfg)
+
 	return &Auth{
 		Region:             region,
 		UserPoolID:         userPoolID,
 		ClientID:           clientID,
+		ClientSecret:       clientSecret,
 		SigninCallbackURI:  signinCallbackURI,
 		SignoutCallbackURI: signoutCallbackURI,
 		ResponseType:       responseType,
@@ -39,7 +54,9 @@ func New(region, userPoolID, clientID, signinCallbackURI, signoutCallbackURI, re
 			region,
 			userPoolID,
 		),
-	}
+		awsCfg:        awsCfg,
+		cognitoClient: cognitoClient,
+	}, nil
 }
 
 func (ca *Auth) issuer() string {

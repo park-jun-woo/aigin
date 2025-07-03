@@ -27,7 +27,6 @@ type Config struct {
 	fullchain string
 	privkey   string
 	tls       bool
-	opaPath   string
 }
 
 type Mist struct {
@@ -40,7 +39,7 @@ type Mist struct {
 }
 
 // New: Mist 서버 생성자
-func New(opaPath string, tls bool) (*Mist, error) {
+func New(tls bool) (*Mist, error) {
 	httpc := mttp.NewClient()
 
 	s := &Mist{
@@ -51,7 +50,6 @@ func New(opaPath string, tls bool) (*Mist, error) {
 			fullchain: env.GetEnv("TLS_FULLCHAIN", ""),
 			privkey:   env.GetEnv("TLS_PRIVKEY", ""),
 			tls:       tls,
-			opaPath:   opaPath,
 		},
 		router: gin.Default(),
 		httpc:  httpc,

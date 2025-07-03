@@ -72,9 +72,7 @@ func (ca *Auth) Authenticate(c *gin.Context) (auth.Claims, bool, error) {
 	tokenStr := extractBearerToken(c.Request)
 	if tokenStr == "" {
 		return auth.Claims{
-			UserID: "guest",
-			Email:  "",
-			Roles:  []string{"Guest"},
+			Roles: []string{"Guest"},
 		}, false, nil
 	}
 
@@ -93,9 +91,11 @@ func (ca *Auth) Authenticate(c *gin.Context) (auth.Claims, bool, error) {
 	}
 
 	return auth.Claims{
-		UserID: claims["sub"].(string),
-		Email:  claims["email"].(string),
-		Roles:  parseRoles(claims),
+		Usersub:  claims["sub"].(string),
+		Username: claims["cognito:username"].(string),
+		Name:     claims["name"].(string),
+		Email:    claims["email"].(string),
+		Roles:    parseRoles(claims),
 	}, true, nil
 }
 

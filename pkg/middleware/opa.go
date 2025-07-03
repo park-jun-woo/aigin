@@ -47,10 +47,13 @@ func OPA(path string) gin.HandlerFunc {
 		claims := auth.GetClaims(c)
 
 		input := map[string]interface{}{
-			"path":   c.Request.URL.Path,
-			"method": c.Request.Method,
-			"userID": claims.UserID,
-			"roles":  claims.Roles,
+			"path":     c.Request.URL.Path,
+			"method":   c.Request.Method,
+			"usersub":  claims.Usersub,
+			"username": claims.Username,
+			"name":     claims.Name,
+			"email":    claims.Email,
+			"roles":    claims.Roles,
 		}
 
 		ctx := context.Background()

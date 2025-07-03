@@ -116,10 +116,12 @@ func (ca *Auth) GetMyinfo() gin.HandlerFunc {
 		claims := auth.GetClaims(c)
 
 		c.JSON(200, gin.H{
-			"userID": claims.UserID,
-			"email":  claims.Email,
-			"roles":  claims.Roles,
-			"extra":  claims.Extra,
+			"Usersub":  claims.Usersub,
+			"Username": claims.Username,
+			"Name":     claims.Name,
+			"email":    claims.Email,
+			"roles":    claims.Roles,
+			"extra":    claims.Extra,
 		})
 	}
 }

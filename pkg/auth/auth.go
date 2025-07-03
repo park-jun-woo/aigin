@@ -9,10 +9,12 @@ type Authenticator interface {
 }
 
 type Claims struct {
-	UserID string
-	Roles  []string
-	Email  string
-	Extra  map[string]interface{}
+	Usersub  string
+	Username string
+	Email    string
+	Name     string
+	Roles    []string
+	Extra    map[string]interface{}
 }
 
 func GetClaims(c *gin.Context) Claims {
@@ -22,5 +24,5 @@ func GetClaims(c *gin.Context) Claims {
 			return claims
 		}
 	}
-	return Claims{UserID: "", Roles: []string{"Guest"}}
+	return Claims{Roles: []string{"Guest"}}
 }

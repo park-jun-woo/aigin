@@ -17,7 +17,7 @@ import (
 )
 
 // OAuth2 로그인 시작 핸들러
-func (ca *Auth) SigninHandler() gin.HandlerFunc {
+func (ca *Auth) Signin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		query := url.Values{
 			"response_type": {ca.ResponseType},
@@ -32,7 +32,7 @@ func (ca *Auth) SigninHandler() gin.HandlerFunc {
 }
 
 // OAuth2 로그인 콜백 핸들러
-func (ca *Auth) SigninCallbackHandler() gin.HandlerFunc {
+func (ca *Auth) SigninCallback() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if ca.ResponseType == "code" {
 			code := c.Query("code")
@@ -58,7 +58,7 @@ func (ca *Auth) SigninCallbackHandler() gin.HandlerFunc {
 }
 
 // OAuth2 로그아웃 핸들러
-func (ca *Auth) SignoutHandler() gin.HandlerFunc {
+func (ca *Auth) Signout() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		logoutURL := fmt.Sprintf("https://%s/logout?%s", ca.domain(), url.Values{
 			"client_id":  {ca.ClientID},
@@ -70,7 +70,7 @@ func (ca *Auth) SignoutHandler() gin.HandlerFunc {
 }
 
 // OAuth2 로그아웃 콜백 핸들러 (필요시 추가로직 구현)
-func (ca *Auth) SignoutCallbackHandler() gin.HandlerFunc {
+func (ca *Auth) SignoutCallback() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"msg": "Signed out successfully"})
 	}
@@ -82,7 +82,7 @@ type ForgotPasswordRequest struct {
 }
 
 // 비밀번호 초기화 요청 핸들러
-func (ca *Auth) PostForgotHandler() gin.HandlerFunc {
+func (ca *Auth) PostForgot() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req ForgotPasswordRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -111,7 +111,7 @@ func (ca *Auth) PostForgotHandler() gin.HandlerFunc {
 }
 
 // 내정보 조회 핸들러
-func (ca *Auth) GetMyinfoHandler(userPoolClientSecret string) gin.HandlerFunc {
+func (ca *Auth) GetMyinfo() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		claims := auth.GetClaims(c)
 
@@ -127,45 +127,36 @@ func (ca *Auth) GetMyinfoHandler(userPoolClientSecret string) gin.HandlerFunc {
 // GetUsers: 사용자 목록 조회 (Admin용)
 func (ca *Auth) GetUsers() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 쿼리 파라미터 처리
-		limit := c.DefaultQuery("limit", "48")
-		page := c.DefaultQuery("page", "1")
-		search := c.Query("search")
-
-		// 파라미터 유효성 검사 및 변환
-		limitInt, err := strconv.Atoi(limit)
+		limitInt, err := strconv.Atoi(c.DefaultQuery("limit", "48"))
 		if err != nil || limitInt <= 0 {
 			limitInt = 48
 		}
 
-		pageInt, err := strconv.Atoi(page)
+		pageInt, err := strconv.Atoi(c.DefaultQuery("page", "1"))
 		if err != nil || pageInt <= 0 {
 			pageInt = 1
 		}
 
-		svc := ca.cognitoClient
+		search := c.Query("search")
 
-		input := &cognitoidentityprovider.ListUsersInput{
-			UserPoolId: aws.String(ca.UserPoolID),
-			Limit:      aws.Int32(int32(limitInt)),
-		}
-
-		// 검색 파라미터 처리 (Username or email)
-		if search != "" {
-			filter := fmt.Sprintf(
-				`username ^= "%[1]s" or email ^= "%[1]s" or name ^= "%[1]s"`,
-				search,
-			)
-			input.Filter = aws.String(filter)
-		}
-
-		var users []types.UserType
 		var paginationToken *string
-
-		// 페이지 번호까지 순차적으로 데이터를 로드
 		currentPage := 1
-		for {
-			input.PaginationToken = paginationToken
+		svc := ca.cognitoClient
+		var users []types.UserType
+		var nextPageToken *string
+
+		for currentPage <= pageInt {
+			input := &cognitoidentityprovider.ListUsersInput{
+				UserPoolId:      aws.String(ca.UserPoolID),
+				Limit:           aws.Int32(int32(limitInt)),
+				PaginationToken: paginationToken,
+			}
+
+			if search != "" {
+				input.Filter = aws.String(fmt.Sprintf(
+					`username ^= "%[1]s" or email ^= "%[1]s" or name ^= "%[1]s"`,
+					search))
+			}
 
 			resp, err := svc.ListUsers(c.Request.Context(), input)
 			if err != nil {
@@ -176,9 +167,15 @@ func (ca *Auth) GetUsers() gin.HandlerFunc {
 				return
 			}
 
-			users = append(users, resp.Users...)
+			if currentPage == pageInt {
+				users = resp.Users
+				nextPageToken = resp.PaginationToken
+				break
+			}
 
-			if currentPage >= pageInt || resp.PaginationToken == nil {
+			if resp.PaginationToken == nil {
+				users = []types.UserType{}
+				nextPageToken = nil
 				break
 			}
 
@@ -186,17 +183,19 @@ func (ca *Auth) GetUsers() gin.HandlerFunc {
 			currentPage++
 		}
 
-		// 요청한 limit보다 많으면 잘라내기
-		if len(users) > limitInt {
-			users = users[:limitInt]
-		}
-
-		c.JSON(http.StatusOK, gin.H{
+		response := gin.H{
 			"page":  pageInt,
 			"limit": limitInt,
-			"total": len(users),
 			"items": users,
-		})
+		}
+
+		if nextPageToken != nil {
+			response["hasNextPage"] = true
+		} else {
+			response["hasNextPage"] = false
+		}
+
+		c.JSON(http.StatusOK, response)
 	}
 }
 

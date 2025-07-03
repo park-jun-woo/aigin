@@ -29,10 +29,16 @@ func main() {
 	s.Use(middleware.OPA("test.rego"))
 
 	// OAuth 핸들러 추가
-	s.GET("/signin", authenticator.SigninHandler())
-	s.GET("/signin-callback", authenticator.SigninCallbackHandler())
-	s.GET("/signout", authenticator.SignoutHandler())
-	s.GET("/signout-callback", authenticator.SignoutCallbackHandler())
+	s.GET("/signin", authenticator.Signin())
+	s.GET("/signin-callback", authenticator.SigninCallback())
+	s.GET("/signout", authenticator.Signout())
+	s.GET("/signout-callback", authenticator.SignoutCallback())
+	s.POST("/forgot", authenticator.PostForgot())
+	s.GET("/myinfo", authenticator.GetMyinfo())
+	s.GET("/users", authenticator.GetUsers())
+	s.GET("/users/:username", authenticator.GetUser())
+	s.POST("/users", authenticator.PostUser())
+	s.PUT("/users/:username", authenticator.PutUser())
 
 	// 서버 실행
 	s.Run()

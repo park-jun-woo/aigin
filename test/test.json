@@ -1,0 +1,5 @@
+{
+    "path": "/users/mail%40parkjunwoo.com",
+    "method": "GET",
+    "roles": ["Admin","Publisher","Reporter"]
+}  

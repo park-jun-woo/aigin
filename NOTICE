@@ -1,0 +1,37 @@
+microstral
+Copyright (c) 2025 PARK JUN WOO
+
+This product includes software developed by third parties under different licenses.
+Below is a list of third-party software components and their licenses.
+
+1. github.com/gin-gonic/gin (MIT License)
+   https://github.com/gin-gonic/gin/blob/master/LICENSE
+
+2. github.com/open-policy-agent/opa (Apache License 2.0)
+   https://github.com/open-policy-agent/opa/blob/main/LICENSE
+
+3. github.com/fsnotify/fsnotify (BSD-3-Clause)
+   https://github.com/fsnotify/fsnotify/blob/main/LICENSE
+
+4. github.com/gofrs/flock (BSD-3-Clause)
+   https://github.com/gofrs/flock/blob/master/LICENSE
+
+5. github.com/golang-jwt/jwt/v5 (MIT License)
+   https://github.com/golang-jwt/jwt/blob/main/LICENSE
+
+6. github.com/redis/go-redis/v9 (BSD-2-Clause License)
+   https://github.com/redis/go-redis/blob/master/LICENSE
+
+7. github.com/gomarkdown/markdown (BSD-2-Clause License)
+   https://github.com/gomarkdown/markdown/blob/master/LICENSE
+
+8. github.com/microcosm-cc/bluemonday (BSD-3-Clause License)
+   https://github.com/microcosm-cc/bluemonday/blob/main/LICENSE
+
+9. golang.org/x/net (BSD-3-Clause License)
+   https://cs.opensource.google/go/x/net/+/refs/heads/master:LICENSE
+
+10. gopkg.in/yaml.v3 (MIT License)
+    https://github.com/go-yaml/yaml/blob/v3/LICENSE
+
+For the complete list and license text, please refer to each link above.

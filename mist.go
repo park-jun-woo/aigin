@@ -26,7 +26,8 @@ type Config struct {
 	httpport  int
 	fullchain string
 	privkey   string
-	tls       bool
+	http      bool
+	https     bool
 }
 
 type Mist struct {
@@ -39,7 +40,7 @@ type Mist struct {
 }
 
 // New: Mist 서버 생성자
-func New(tls bool) (*Mist, error) {
+func New(http bool, https bool) (*Mist, error) {
 	httpc := mttp.NewClient()
 
 	s := &Mist{
@@ -49,7 +50,8 @@ func New(tls bool) (*Mist, error) {
 			httpport:  env.GetEnvInt("HTTP_PORT", 80),
 			fullchain: env.GetEnv("TLS_FULLCHAIN", ""),
 			privkey:   env.GetEnv("TLS_PRIVKEY", ""),
-			tls:       tls,
+			http:      http,
+			https:     https,
 		},
 		router: gin.Default(),
 		httpc:  httpc,
@@ -67,32 +69,7 @@ func (s *Mist) Run() error {
 	errCh := make(chan error, 2)
 	var httpsServer, httpServer *http.Server
 
-	if s.cfg.tls {
-		httpsServer = &http.Server{
-			Addr:    fmt.Sprintf(":%d", s.cfg.httpsport),
-			Handler: s.router,
-		}
-		httpServer = &http.Server{
-			Addr: fmt.Sprintf(":%d", s.cfg.httpport),
-			Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				target := "https://" + r.Host + r.URL.RequestURI()
-				http.Redirect(w, r, target, http.StatusMovedPermanently)
-			}),
-		}
-
-		go func() {
-			log.Println("Starting HTTPS server...")
-			if err := httpsServer.ListenAndServeTLS(s.cfg.fullchain, s.cfg.privkey); err != nil && err != http.ErrServerClosed {
-				errCh <- err
-			}
-		}()
-		go func() {
-			log.Println("Starting HTTP→HTTPS redirect server...")
-			if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				errCh <- err
-			}
-		}()
-	} else {
+	if s.cfg.http {
 		httpServer = &http.Server{
 			Addr:    fmt.Sprintf(":%d", s.cfg.httpport),
 			Handler: s.router,
@@ -104,7 +81,18 @@ func (s *Mist) Run() error {
 			}
 		}()
 	}
-
+	if s.cfg.https {
+		httpsServer = &http.Server{
+			Addr:    fmt.Sprintf(":%d", s.cfg.httpsport),
+			Handler: s.router,
+		}
+		go func() {
+			log.Println("Starting HTTPS server...")
+			if err := httpsServer.ListenAndServeTLS(s.cfg.fullchain, s.cfg.privkey); err != nil && err != http.ErrServerClosed {
+				errCh <- err
+			}
+		}()
+	}
 	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -125,16 +113,18 @@ func (s *Mist) Run() error {
 		}
 	}()
 
-	if s.cfg.tls {
+	if s.cfg.http {
+		if httpServer != nil {
+			if err := httpServer.Shutdown(ctx); err != nil {
+				log.Printf("HTTP shutdown error: %v", err)
+			}
+		}
+	}
+	if s.cfg.https {
 		if httpsServer != nil {
 			if err := httpsServer.Shutdown(ctx); err != nil {
 				log.Printf("HTTPS shutdown error: %v", err)
 			}
-		}
-	}
-	if httpServer != nil {
-		if err := httpServer.Shutdown(ctx); err != nil {
-			log.Printf("HTTP shutdown error: %v", err)
 		}
 	}
 

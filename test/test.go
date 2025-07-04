@@ -9,7 +9,7 @@ import (
 
 func main() {
 	// Mist 서버 생성
-	s, err := mist.New(true)
+	s, err := mist.New(false, true)
 	if err != nil {
 		panic(err)
 	}

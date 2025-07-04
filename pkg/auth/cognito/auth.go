@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -12,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"parkjunwoo.com/microstral/pkg/auth"
@@ -34,16 +36,34 @@ type Auth struct {
 	once          sync.Once
 }
 
+func getSecretValue(cfg aws.Config, secretName string) (string, error) {
+	svc := secretsmanager.NewFromConfig(cfg)
+	result, err := svc.GetSecretValue(context.TODO(), &secretsmanager.GetSecretValueInput{
+		SecretId: &secretName,
+	})
+	if err != nil {
+		return "", fmt.Errorf("unable to retrieve secret %s: %w", secretName, err)
+	}
+	return *result.SecretString, nil
+}
+
 func New(host, responseType string) (*Auth, error) {
 	region := env.GetEnv("COGNITO_REGION", "")
 	userPoolID := env.GetEnv("COGNITO_USERPOOL_ID", "")
 	clientID := env.GetEnv("COGNITO_CLIENT_ID", "")
-	clientSecret := env.GetEnv("COGNITO_CLIENT_SECRET", "")
+	clientSecretName := env.GetEnv("COGNITO_CLIENT_SECRET", "")
 	signinCallbackURI := env.GetEnv("COGNITO_SIGNIN_CALLBACK", "")
 	signoutCallbackURI := env.GetEnv("COGNITO_SIGNOUT_CALLBACK", "")
 
 	awsCfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
 	if err != nil {
+		return nil, err
+	}
+
+	// 여기서 Secrets Manager로부터 실제 Secret 조회
+	clientSecret, err := getSecretValue(awsCfg, clientSecretName)
+	if err != nil {
+		log.Printf("failed to get secret: %v", err)
 		return nil, err
 	}
 

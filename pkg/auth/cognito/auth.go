@@ -39,8 +39,8 @@ func New(host, responseType string) (*Auth, error) {
 	userPoolID := env.GetEnv("COGNITO_USERPOOL_ID", "")
 	clientID := env.GetEnv("COGNITO_CLIENT_ID", "")
 	clientSecret := env.GetEnv("COGNITO_CLIENT_SECRET", "")
-	signinCallbackURI := fmt.Sprintf("https://%s/signin-callback", host)
-	signoutCallbackURI := fmt.Sprintf("https://%s/signout-callback", host)
+	signinCallbackURI := env.GetEnv("COGNITO_SIGNIN_CALLBACK", "")
+	signoutCallbackURI := env.GetEnv("COGNITO_SIGNOUT_CALLBACK", "")
 
 	awsCfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
 	if err != nil {

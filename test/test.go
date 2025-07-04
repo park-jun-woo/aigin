@@ -21,7 +21,7 @@ func main() {
 
 	s.Use(middleware.Origin())
 	s.Use(middleware.Auth(authenticator))
-	s.Use(middleware.OPA("test.rego"))
+	s.Use(middleware.OPA())
 
 	// OAuth 핸들러 추가
 	s.GET("/signin", authenticator.Signin())

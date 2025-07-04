@@ -12,9 +12,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 
+	"parkjunwoo.com/microstral/pkg/auth/cognito"
 	"parkjunwoo.com/microstral/pkg/env"
 	"parkjunwoo.com/microstral/pkg/mttp"
 	"parkjunwoo.com/microstral/pkg/services"
@@ -37,11 +40,18 @@ type Mist struct {
 	}
 	router *gin.Engine
 	httpc  *mttp.Client
+	awsCfg aws.Config
 }
 
 // New: Mist 서버 생성자
 func New(http bool, https bool) (*Mist, error) {
 	httpc := mttp.NewClient()
+
+	region := env.GetEnv("REGION", "ap-northeast-2")
+	awsCfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
+	if err != nil {
+		return nil, err
+	}
 
 	s := &Mist{
 		cfg: Config{
@@ -55,6 +65,7 @@ func New(http bool, https bool) (*Mist, error) {
 		},
 		router: gin.Default(),
 		httpc:  httpc,
+		awsCfg: awsCfg,
 	}
 
 	// 헬스체크 엔드포인트
@@ -184,16 +195,22 @@ func (s *Mist) HEAD(relativePath string, handlers ...gin.HandlerFunc) gin.IRoute
 	return s.router.HEAD(relativePath, handlers...)
 }
 
-func (s *Mist) Postgres() (*sql.DB, error) {
+func (s *Mist) Postgres(password string) (*sql.DB, error) {
 	//Postgres 연결
 	host := env.GetEnv("POSTGRES_HOST", "postgres")
 	port := env.GetEnvInt("POSTGRES_PORT", 5432)
 	dbname := env.GetEnv("POSTGRES_DB", "mist")
 	username := env.GetEnv("POSTGRES_USERNAME", "mist")
-	password := env.GetEnv("POSTGRES_PASSWORD", "")
+	password_secret := env.GetEnv("POSTGRES_PASSWORD_SECRET", s.cfg.host+"/postgres_password")
 	openConns := env.GetEnvInt("POSTGRES_OPEN_CONNS", 15)
 	maxIdleConns := env.GetEnvInt("POSTGRES_MAX_IDLE_CONNS", 15)
 	connMaxLifetime := env.GetEnvInt("POSTGRES_CONN_MAX_LIFETIME", 0)
+
+	password, err := cognito.GetSecretValue(s.awsCfg, password_secret)
+	if err != nil {
+		log.Printf("failed to get secret: %v", err)
+		return nil, err
+	}
 
 	postgresDSN := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, username, password, dbname)

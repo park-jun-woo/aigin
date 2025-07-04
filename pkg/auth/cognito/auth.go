@@ -36,7 +36,7 @@ type Auth struct {
 	once          sync.Once
 }
 
-func getSecretValue(cfg aws.Config, secretName string) (string, error) {
+func GetSecretValue(cfg aws.Config, secretName string) (string, error) {
 	svc := secretsmanager.NewFromConfig(cfg)
 	result, err := svc.GetSecretValue(context.TODO(), &secretsmanager.GetSecretValueInput{
 		SecretId: &secretName,
@@ -60,8 +60,7 @@ func New(host, responseType string) (*Auth, error) {
 		return nil, err
 	}
 
-	// 여기서 Secrets Manager로부터 실제 Secret 조회
-	clientSecret, err := getSecretValue(awsCfg, clientSecretName)
+	clientSecret, err := GetSecretValue(awsCfg, clientSecretName)
 	if err != nil {
 		log.Printf("failed to get secret: %v", err)
 		return nil, err

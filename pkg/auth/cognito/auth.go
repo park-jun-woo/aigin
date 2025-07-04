@@ -15,6 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"parkjunwoo.com/microstral/pkg/auth"
+	"parkjunwoo.com/microstral/pkg/env"
 )
 
 type Auth struct {
@@ -33,7 +34,14 @@ type Auth struct {
 	once          sync.Once
 }
 
-func New(region, userPoolID, clientID, clientSecret, signinCallbackURI, signoutCallbackURI, responseType string) (*Auth, error) {
+func New(host, responseType string) (*Auth, error) {
+	region := env.GetEnv("COGNITO_REGION", "")
+	userPoolID := env.GetEnv("COGNITO_USERPOOL_ID", "")
+	clientID := env.GetEnv("COGNITO_CLIENT_ID", "")
+	clientSecret := env.GetEnv("COGNITO_CLIENT_SECRET", "")
+	signinCallbackURI := fmt.Sprintf("https://%s/signin-callback", host)
+	signoutCallbackURI := fmt.Sprintf("https://%s/signout-callback", host)
+
 	awsCfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
 	if err != nil {
 		return nil, err

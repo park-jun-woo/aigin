@@ -14,12 +14,7 @@ func main() {
 		panic(err)
 	}
 
-	authenticator, err := cognito.New(
-		"ap-northeast-2", "userpoolid", "clientid", "client secret",
-		"https://yourdomain.com/signin-callback",
-		"https://yourdomain.com/signout-callback",
-		"code",
-	)
+	authenticator, err := cognito.New(s.GetHost(), "code")
 	if err != nil {
 		panic(err)
 	}

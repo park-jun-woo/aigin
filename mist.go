@@ -195,7 +195,7 @@ func (s *Mist) HEAD(relativePath string, handlers ...gin.HandlerFunc) gin.IRoute
 	return s.router.HEAD(relativePath, handlers...)
 }
 
-func (s *Mist) Postgres(password string) (*sql.DB, error) {
+func (s *Mist) Postgres() (*sql.DB, error) {
 	//Postgres 연결
 	host := env.GetEnv("POSTGRES_HOST", "postgres")
 	port := env.GetEnvInt("POSTGRES_PORT", 5432)

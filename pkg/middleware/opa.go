@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/open-policy-agent/opa/v1/rego"
 	"parkjunwoo.com/microstral/pkg/auth"
+	"parkjunwoo.com/microstral/pkg/env"
 	"parkjunwoo.com/microstral/pkg/file"
 )
 
@@ -33,8 +34,8 @@ func initPolicyHotReload(path string) {
 	}
 }
 
-func OPA(path string) gin.HandlerFunc {
-	// 미들웨어가 최초 실행될 때 핫리로드 초기화
+func OPA() gin.HandlerFunc {
+	path := env.GetEnv("OPA_POLICY", "policy.rego")
 	initPolicyHotReload(path)
 
 	return func(c *gin.Context) {

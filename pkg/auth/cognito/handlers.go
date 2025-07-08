@@ -2,13 +2,19 @@
 package cognito
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/cloudfront/sign"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
+	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/gin-gonic/gin"
 	"parkjunwoo.com/microstral/pkg/auth"
@@ -25,26 +31,93 @@ func (ca *Auth) Signin() gin.HandlerFunc {
 // OAuth2 로그인 콜백 핸들러
 func (ca *Auth) SigninCallback() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if ca.ResponseType == "code" {
-			code := c.Query("code")
-			if code == "" {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "no authorization code provided"})
-				return
-			}
-			// 코드로 토큰 교환 로직 구현 필요
-			c.JSON(http.StatusOK, gin.H{"code": code})
+		code := c.Query("code")
+		if code == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "no authorization code provided"})
 			return
 		}
 
-		// implicit 방식(token)
-		idToken := c.Query("id_token")
-		if idToken == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "no token provided"})
+		// Authorization Code → Token 교환
+		tokenEndpoint := fmt.Sprintf("https://%s/oauth2/token", ca.domain())
+
+		reqBody := fmt.Sprintf(
+			"grant_type=authorization_code&client_id=%s&code=%s&redirect_uri=%s",
+			ca.ClientID, code, ca.SigninCallbackURI,
+		)
+
+		req, err := http.NewRequest("POST", tokenEndpoint, strings.NewReader(reqBody))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create token request"})
+			return
+		}
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+		// 클라이언트 시크릿 있을 경우 Basic 인증 추가
+		if ca.ClientSecret != "" {
+			authHeader := "Basic " + secure.BasicAuth(ca.ClientID, ca.ClientSecret)
+			req.Header.Set("Authorization", authHeader)
+		}
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to exchange code for token"})
+			return
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			c.JSON(resp.StatusCode, gin.H{"error": "token exchange failed"})
 			return
 		}
 
-		// 토큰 검증 및 처리 로직
-		c.JSON(http.StatusOK, gin.H{"id_token": idToken})
+		var tokenRes struct {
+			IDToken      string `json:"id_token"`
+			AccessToken  string `json:"access_token"`
+			RefreshToken string `json:"refresh_token"`
+			ExpiresIn    int    `json:"expires_in"`
+			TokenType    string `json:"token_type"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&tokenRes); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to decode token response"})
+			return
+		}
+
+		// ID Token 검증 (선택적으로 Claims 파싱 가능)
+		_, err = jwt.Parse(tokenRes.IDToken, ca.keyFunc)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid id_token"})
+			return
+		}
+
+		// RSA 키 파싱
+		privKey, err := sign.LoadPEMPrivKey(bytes.NewReader([]byte(ca.SignedCookieSecret)))
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid private key"})
+			return
+		}
+
+		// Create a CookieSigner
+		signer := sign.NewCookieSigner(ca.CloudfrontID, privKey)
+
+		// Generate cookies for your domain
+		cookies, err := signer.Sign("https://"+ca.Domain+"/*", time.Now().Add(30*24*time.Hour))
+		if err != nil {
+			// handle error
+		}
+
+		// 쿠키 설정 (Secure + HttpOnly)
+		c.SetCookie("t", tokenRes.IDToken, tokenRes.ExpiresIn, "/", ca.Domain, true, true)
+		c.SetCookie("r", tokenRes.RefreshToken, 60*60*24*30, "/", ca.Domain, true, true)
+
+		for _, ck := range cookies {
+			c.SetCookie(
+				ck.Name, ck.Value,
+				int(time.Until(ck.Expires).Seconds()),
+				ck.Path, ca.Domain, ck.Secure, ck.HttpOnly,
+			)
+		}
+
+		c.Redirect(http.StatusFound, "/")
 	}
 }
 
@@ -58,7 +131,9 @@ func (ca *Auth) Signout() gin.HandlerFunc {
 // OAuth2 로그아웃 콜백 핸들러 (필요시 추가로직 구현)
 func (ca *Auth) SignoutCallback() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"msg": "Signed out successfully"})
+		c.SetCookie("t", "", -1, "/", ca.Domain, true, true)
+		c.SetCookie("r", "", -1, "/", ca.Domain, true, true)
+		c.Redirect(http.StatusFound, "/")
 	}
 }
 

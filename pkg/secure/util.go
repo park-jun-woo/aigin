@@ -13,3 +13,8 @@ func CalcSecretHash(clientID, clientSecret, username string) string {
 	mac.Write([]byte(username + clientID))
 	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
 }
+
+func BasicAuth(clientID, clientSecret string) string {
+	auth := clientID + ":" + clientSecret
+	return base64.StdEncoding.EncodeToString([]byte(auth))
+}

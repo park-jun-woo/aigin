@@ -5,6 +5,7 @@ go 1.24.2
 require (
 	github.com/aws/aws-sdk-go-v2 v1.36.5
 	github.com/aws/aws-sdk-go-v2/config v1.29.17
+	github.com/aws/aws-sdk-go-v2/feature/cloudfront/sign v1.8.13
 	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.53.2
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.7
 	github.com/fsnotify/fsnotify v1.9.0

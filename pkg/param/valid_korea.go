@@ -7,7 +7,8 @@ import (
 )
 
 func init() {
-	RegisterValidFunc(TITLE, ValidTitle)
+	RegisterValidFunc(NAME_KR, ValidNameKR)
+	RegisterValidFunc(TITLE_KR, ValidTitleKR)
 	RegisterValidFunc(SSN_KR, ValidSSNKR)
 	RegisterValidFunc(RRN_KR, ValidRRNKR)
 	RegisterValidFunc(BRN_KR, ValidBRNKR)
@@ -18,7 +19,8 @@ func init() {
 }
 
 var (
-	regTitle        = regexp.MustCompile(`^[가-힣a-zA-Z0-9 .,!?\[\]\(\)_\-@&/|$%*+~^:={}'"]+$`)
+	regNameKR       = regexp.MustCompile(`^[가-힣a-zA-Z0-9 .-_]+$`)
+	regTitleKR      = regexp.MustCompile(`^[가-힣a-zA-Z0-9 .,!?\[\]\(\)_\-@&/|$%*+~^:={}'"]+$`)
 	regexSSNKR      = regexp.MustCompile(`^(\d{6})-?[1-4]{1}\d{6}$`)
 	regexRRNKR      = regexp.MustCompile(`^(\d{6})-?[5-8]{1}\d{6}$`)
 	regexBRNKR      = regexp.MustCompile(`^(\d{3})-?(\d{2})-?(\d{5})$`)
@@ -28,9 +30,14 @@ var (
 	regexZipcodeKR  = regexp.MustCompile(`^\d{5}$`)
 )
 
-// ValidTitle은 제목 형식이 맞는지 확인합니다.
-func ValidTitle(value string) (bool, error) {
-	return regTitle.MatchString(value), nil
+// ValidNameKR은 한국 이름 형식이 맞는지 확인합니다.
+func ValidNameKR(value string) (bool, error) {
+	return regNameKR.MatchString(value), nil
+}
+
+// ValidTitleKR은 한국 제목 형식이 맞는지 확인합니다.
+func ValidTitleKR(value string) (bool, error) {
+	return regTitleKR.MatchString(value), nil
 }
 
 // ValidSSN은 주민등록번호 형식이 맞는지 확인합니다.

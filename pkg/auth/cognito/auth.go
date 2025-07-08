@@ -25,7 +25,9 @@ type Auth struct {
 	UserPoolID         string
 	ClientID           string
 	ClientSecret       string
+	SigninURI          string
 	SigninCallbackURI  string
+	SignoutURI         string
 	SignoutCallbackURI string
 	ResponseType       string
 	JWKSUrl            string
@@ -52,7 +54,9 @@ func New(host, responseType string) (*Auth, error) {
 	userPoolID := env.GetEnv("COGNITO_USERPOOL_ID", "")
 	clientID := env.GetEnv("COGNITO_CLIENT_ID", "")
 	clientSecretName := env.GetEnv("COGNITO_CLIENT_SECRET", "")
+	signinURI := env.GetEnv("COGNITO_SIGNIN", "")
 	signinCallbackURI := env.GetEnv("COGNITO_SIGNIN_CALLBACK", "")
+	signoutURI := env.GetEnv("COGNITO_SIGNOUT", "")
 	signoutCallbackURI := env.GetEnv("COGNITO_SIGNOUT_CALLBACK", "")
 
 	awsCfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
@@ -73,7 +77,9 @@ func New(host, responseType string) (*Auth, error) {
 		UserPoolID:         userPoolID,
 		ClientID:           clientID,
 		ClientSecret:       clientSecret,
+		SigninURI:          signinURI,
 		SigninCallbackURI:  signinCallbackURI,
+		SignoutURI:         signoutURI,
 		SignoutCallbackURI: signoutCallbackURI,
 		ResponseType:       responseType,
 		JWKSUrl: fmt.Sprintf(

@@ -4,7 +4,6 @@ package cognito
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -19,15 +18,7 @@ import (
 // OAuth2 로그인 시작 핸들러
 func (ca *Auth) Signin() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		query := url.Values{
-			"response_type": {ca.ResponseType},
-			"client_id":     {ca.ClientID},
-			"redirect_uri":  {ca.SigninCallbackURI},
-			"scope":         {"openid email profile"},
-		}
-
-		authURL := fmt.Sprintf("https://%s/oauth2/authorize?%s", ca.domain(), query.Encode())
-		c.Redirect(http.StatusFound, authURL)
+		c.Redirect(http.StatusFound, ca.SigninURI)
 	}
 }
 
@@ -60,12 +51,7 @@ func (ca *Auth) SigninCallback() gin.HandlerFunc {
 // OAuth2 로그아웃 핸들러
 func (ca *Auth) Signout() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		logoutURL := fmt.Sprintf("https://%s/logout?%s", ca.domain(), url.Values{
-			"client_id":  {ca.ClientID},
-			"logout_uri": {ca.SignoutCallbackURI},
-		}.Encode())
-
-		c.Redirect(http.StatusFound, logoutURL)
+		c.Redirect(http.StatusFound, ca.SignoutURI)
 	}
 }
 

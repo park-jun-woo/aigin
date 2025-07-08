@@ -47,7 +47,7 @@ func (ca *Auth) SigninCallback() gin.HandlerFunc {
 
 		req, err := http.NewRequest("POST", tokenEndpoint, strings.NewReader(reqBody))
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create token request"})
+			c.JSON(http.StatusInternalServerError+11, gin.H{"error": "failed to create token request"})
 			return
 		}
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -60,7 +60,7 @@ func (ca *Auth) SigninCallback() gin.HandlerFunc {
 
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to exchange code for token"})
+			c.JSON(http.StatusInternalServerError+12, gin.H{"error": "failed to exchange code for token"})
 			return
 		}
 		defer resp.Body.Close()
@@ -78,21 +78,21 @@ func (ca *Auth) SigninCallback() gin.HandlerFunc {
 			TokenType    string `json:"token_type"`
 		}
 		if err := json.NewDecoder(resp.Body).Decode(&tokenRes); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to decode token response"})
+			c.JSON(http.StatusInternalServerError+13, gin.H{"error": "failed to decode token response"})
 			return
 		}
 
 		// ID Token 검증 (선택적으로 Claims 파싱 가능)
 		_, err = jwt.Parse(tokenRes.IDToken, ca.keyFunc)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid id_token"})
+			c.JSON(http.StatusUnauthorized+14, gin.H{"error": "invalid id_token"})
 			return
 		}
 
 		// RSA 키 파싱
 		privKey, err := sign.LoadPEMPrivKey(bytes.NewReader([]byte(ca.SignedCookieSecret)))
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid private key"})
+			c.JSON(http.StatusUnauthorized+15, gin.H{"error": "invalid private key"})
 			return
 		}
 

@@ -14,7 +14,7 @@ func main() {
 		panic(err)
 	}
 
-	authenticator, err := cognito.New(s.GetHost(), "code")
+	authenticator, err := cognito.New("code")
 	if err != nil {
 		panic(err)
 	}

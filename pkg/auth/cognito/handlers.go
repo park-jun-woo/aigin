@@ -47,7 +47,7 @@ func (ca *Auth) SigninCallback() gin.HandlerFunc {
 
 		req, err := http.NewRequest("POST", tokenEndpoint, strings.NewReader(reqBody))
 		if err != nil {
-			c.JSON(http.StatusInternalServerError+11, gin.H{"error": "failed to create token request"})
+			c.JSON(http.StatusInternalServerError+11, gin.H{"error": "failed to create token request " + reqBody})
 			return
 		}
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")

@@ -17,7 +17,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 
-	"parkjunwoo.com/microstral/pkg/auth/cognito"
 	"parkjunwoo.com/microstral/pkg/env"
 	"parkjunwoo.com/microstral/pkg/mttp"
 	"parkjunwoo.com/microstral/pkg/services"
@@ -197,20 +196,14 @@ func (s *Mist) HEAD(relativePath string, handlers ...gin.HandlerFunc) gin.IRoute
 
 func (s *Mist) Postgres() (*sql.DB, error) {
 	//Postgres 연결
-	host := env.GetEnv("POSTGRES_HOST", "postgres")
+	host := env.GetEnv("POSTGRES_HOST", "db")
 	port := env.GetEnvInt("POSTGRES_PORT", 5432)
 	dbname := env.GetEnv("POSTGRES_DB", "mist")
 	username := env.GetEnv("POSTGRES_USERNAME", "mist")
-	password_secret := env.GetEnv("POSTGRES_PASSWORD_SECRET", s.cfg.host+"/postgres_password")
+	password := env.GetEnv("POSTGRES_PASSWORD", "")
 	openConns := env.GetEnvInt("POSTGRES_OPEN_CONNS", 15)
 	maxIdleConns := env.GetEnvInt("POSTGRES_MAX_IDLE_CONNS", 15)
 	connMaxLifetime := env.GetEnvInt("POSTGRES_CONN_MAX_LIFETIME", 0)
-
-	password, err := cognito.GetSecretValue(s.awsCfg, password_secret)
-	if err != nil {
-		log.Printf("failed to get secret: %v", err)
-		return nil, err
-	}
 
 	postgresDSN := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, username, password, dbname)

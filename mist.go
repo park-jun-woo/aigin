@@ -14,6 +14,8 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 
@@ -66,6 +68,9 @@ func New(http bool, https bool) (*Mist, error) {
 		httpc:  httpc,
 		awsCfg: awsCfg,
 	}
+
+	store := cookie.NewStore([]byte("secret"))
+	s.router.Use(sessions.Sessions("mysession", store))
 
 	// 헬스체크 엔드포인트
 	s.GET("/healthcheck", nil, services.Healthcheck)

@@ -50,11 +50,10 @@ func OPA() gin.HandlerFunc {
 		input := map[string]interface{}{
 			"path":     c.Request.URL.Path,
 			"method":   c.Request.Method,
-			"usersub":  claims.Usersub,
-			"username": claims.Username,
+			"username": claims.ID,
 			"name":     claims.Name,
 			"email":    claims.Email,
-			"roles":    claims.Roles,
+			"groups":   claims.Groups,
 		}
 
 		ctx := context.Background()

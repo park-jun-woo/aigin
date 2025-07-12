@@ -47,8 +47,8 @@ func NewUserController(
 		SigninURI:  env.GetEnv("AUTH_SIGNIN", ""),
 		SignoutURI: env.GetEnv("AUTH_SIGNOUT", ""),
 
-		TokenExpiresIn:   3600,                                                  // 기본 1시간
-		IDExpiresIn:      3600,                                                  // 기본 1시간
+		TokenExpiresIn:   env.GetEnvInt("AUTH_TOKEN_EXPIRES_IN", 3600),          // 기본 1시간
+		IDExpiresIn:      env.GetEnvInt("AUTH_ID_EXPIRES_IN", 3600),             // 기본 1시간
 		RefreshExpiresIn: env.GetEnvInt("AUTH_REFRESH_EXPIRES_IN", 60*60*24*30), // 기본 30일
 	}
 }

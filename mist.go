@@ -70,7 +70,7 @@ func New(http bool, https bool) (*Mist, error) {
 	}
 
 	store := cookie.NewStore([]byte("secret"))
-	s.router.Use(sessions.Sessions("mysession", store))
+	s.router.Use(sessions.Sessions("session", store))
 
 	// 헬스체크 엔드포인트
 	s.GET("/healthcheck", nil, services.Healthcheck)

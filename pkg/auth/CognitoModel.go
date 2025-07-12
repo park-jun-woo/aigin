@@ -79,7 +79,7 @@ func NewCognitoModel(awsCfg aws.Config) *CognitoModel {
 // Authenticator 미들웨어, 요청의 JWT 토큰을 검증하고 claims를 설정합니다.
 func (m *CognitoModel) Authenticator() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		guestClaims := Claims{Groups: []string{"Guest"}}
+		//guestClaims := Claims{Groups: []string{"Guest"}}
 		var claims *Claims
 		// 1. t쿠키 검증
 		tokenStr, err := c.Cookie("t")
@@ -91,7 +91,7 @@ func (m *CognitoModel) Authenticator() gin.HandlerFunc {
 				}
 			}
 		}
-		// 2. t쿠키가 없거나 만료/검증실패일 때 r쿠키로 재발급 시도
+		/*/ 2. t쿠키가 없거나 만료/검증실패일 때 r쿠키로 재발급 시도
 		if claims == nil {
 			refreshToken, err := c.Cookie("r")
 			if err == nil && refreshToken != "" {
@@ -149,7 +149,7 @@ func (m *CognitoModel) Authenticator() gin.HandlerFunc {
 				}
 				claims.Groups = groups
 			}
-		}
+		}//*/
 		c.Set("claims", claims)
 		c.Next()
 	}

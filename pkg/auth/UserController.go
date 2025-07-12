@@ -53,14 +53,14 @@ func NewUserController(
 	}
 }
 
-func GetClaims(c *gin.Context) Claims {
+func GetClaims(c *gin.Context) *Claims {
 	claimsRaw, exists := c.Get("claims")
 	if exists && claimsRaw != nil {
-		if claims, ok := claimsRaw.(Claims); ok {
+		if claims, ok := claimsRaw.(*Claims); ok {
 			return claims
 		}
 	}
-	return Claims{Groups: []string{"Guest"}}
+	return &Claims{Groups: []string{"Guest"}}
 }
 
 func generateState() string {

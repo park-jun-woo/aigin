@@ -72,7 +72,7 @@ func (m *CloudFrontModel) CreateSignedCookies(resourceURL string, expireAt time.
 	if err != nil {
 		return nil, err
 	}
-	policyB64 := base64.StdEncoding.EncodeToString(policyJson)
+	policyB64 := base64.RawURLEncoding.EncodeToString(policyJson)
 
 	// 2. 프라이빗 키 파싱
 	privKey, err := parseRSAPrivateKeyFromPEM(m.CloudfrontSecret)
@@ -103,7 +103,7 @@ func signPolicyRSA_SHA1(policyB64 string, privateKey *rsa.PrivateKey) (string, e
 	if err != nil {
 		return "", err
 	}
-	return base64.StdEncoding.EncodeToString(signature), nil
+	return base64.RawURLEncoding.EncodeToString(signature), nil
 }
 
 func parseRSAPrivateKeyFromPEM(keyPEM string) (*rsa.PrivateKey, error) {

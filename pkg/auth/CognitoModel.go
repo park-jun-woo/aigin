@@ -81,13 +81,14 @@ func (m *CognitoModel) Authenticator() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		guestClaims := Claims{Groups: []string{"Guest"}}
 		var claims *Claims
+
 		// 1. t쿠키 검증
 		tokenStr, err := c.Cookie("t")
 		if err == nil && tokenStr != "" {
-			token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, m.JWKS.Keyfunc)
+			token, err := jwt.ParseWithClaims(tokenStr, jwt.MapClaims{}, m.JWKS.Keyfunc)
 			if err == nil && token.Valid {
-				if c2, ok := token.Claims.(*Claims); ok {
-					claims = c2
+				if mapClaims, ok := token.Claims.(jwt.MapClaims); ok {
+					claims = parseClaims(mapClaims)
 				}
 			}
 		}
@@ -101,10 +102,10 @@ func (m *CognitoModel) Authenticator() gin.HandlerFunc {
 					c.SetCookie("t", newTokenRes.IDToken, m.IDExpiresIn, "/", m.Host, true, true)
 					c.SetCookie("r", newTokenRes.RefreshToken, m.RefreshExpiresIn, "/", m.Host, true, true)
 					// 다시 검증해서 claims 설정
-					token, err := jwt.ParseWithClaims(newTokenRes.IDToken, &Claims{}, m.JWKS.Keyfunc)
+					token, err := jwt.ParseWithClaims(newTokenRes.IDToken, jwt.MapClaims{}, m.JWKS.Keyfunc)
 					if err == nil && token.Valid {
-						if c2, ok := token.Claims.(*Claims); ok {
-							claims = c2
+						if mapClaims, ok := token.Claims.(jwt.MapClaims); ok {
+							claims = parseClaims(mapClaims)
 						}
 					}
 				}
@@ -137,22 +138,56 @@ func (m *CognitoModel) Authenticator() gin.HandlerFunc {
 			c.Next()
 			return
 		}
-		// ----[ Groups 필드 추출 보정 ]----
-		groups := claims.Groups
-		if groups == nil && claims.Extra != nil {
-			if g, ok := claims.Extra["cognito:groups"].([]interface{}); ok {
-				groups = make([]string, 0, len(g))
-				for _, v := range g {
-					if s, ok := v.(string); ok {
-						groups = append(groups, s)
-					}
-				}
-				claims.Groups = groups
-			}
-		}
 		c.Set("claims", claims)
 		c.Next()
 	}
+}
+
+// 내부 함수로 분리해서 중복 제거
+func parseClaims(mapClaims jwt.MapClaims) *Claims {
+	c := &Claims{}
+	// 안전하게 파싱
+	if v, ok := mapClaims["cognito:username"].(string); ok {
+		c.ID = v
+	}
+	if v, ok := mapClaims["name"].(string); ok {
+		c.Name = v
+	}
+	if v, ok := mapClaims["email"].(string); ok {
+		c.Email = v
+	}
+	if v, ok := mapClaims["iss"].(string); ok {
+		c.Issuer = v
+	}
+	// audience 변환
+	switch aud := mapClaims["aud"].(type) {
+	case string:
+		c.Audience = []string{aud}
+	case []interface{}:
+		c.Audience = make([]string, 0, len(aud))
+		for _, a := range aud {
+			if s, ok := a.(string); ok {
+				c.Audience = append(c.Audience, s)
+			}
+		}
+	}
+	c.Groups = parseRoles(mapClaims)
+	return c
+}
+
+func parseRoles(claims jwt.MapClaims) []string {
+	groups, ok := claims["cognito:groups"].([]interface{})
+	if !ok {
+		return []string{}
+	}
+
+	var roles []string
+	for _, group := range groups {
+		if role, ok := group.(string); ok {
+			roles = append(roles, role)
+		}
+	}
+	return roles
 }
 
 func (m *CognitoModel) GetToken(ctx context.Context, code string) (*TokenResponse, error) {

@@ -140,7 +140,7 @@ func (m *CognitoModel) Authenticator() gin.HandlerFunc {
 		// ----[ Groups 필드 추출 보정 ]----
 		groups := claims.Groups
 		if groups == nil && claims.Extra != nil {
-			if g, ok := claims.Extra["groups"].([]interface{}); ok {
+			if g, ok := claims.Extra["cognito:groups"].([]interface{}); ok {
 				groups = make([]string, 0, len(g))
 				for _, v := range g {
 					if s, ok := v.(string); ok {

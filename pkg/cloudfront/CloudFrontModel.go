@@ -81,7 +81,7 @@ func (m *CloudFrontModel) CreateSignedCookies(resourceURL string, expireAt time.
 	}
 
 	// 3. 정책에 서명 (RSA SHA1)
-	signature, err := signPolicyRSA_SHA1(policyB64, privKey)
+	signature, err := signPolicyRSA_SHA1(policyJson, privKey)
 	if err != nil {
 		return nil, err
 	}
@@ -94,9 +94,9 @@ func (m *CloudFrontModel) CreateSignedCookies(resourceURL string, expireAt time.
 	}, nil
 }
 
-func signPolicyRSA_SHA1(policyB64 string, privateKey *rsa.PrivateKey) (string, error) {
+func signPolicyRSA_SHA1(policy []byte, privateKey *rsa.PrivateKey) (string, error) {
 	hashed := crypto.SHA1.New()
-	hashed.Write([]byte(policyB64))
+	hashed.Write(policy)
 	digest := hashed.Sum(nil)
 
 	signature, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA1, digest)

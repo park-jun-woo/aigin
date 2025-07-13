@@ -12,6 +12,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -72,7 +73,7 @@ func (m *CloudFrontModel) CreateSignedCookies(resourceURL string, expireAt time.
 	if err != nil {
 		return nil, err
 	}
-	policyB64 := base64.RawURLEncoding.EncodeToString(policyJson)
+	policyB64 := toCloudFrontB64(policyJson)
 
 	// 2. 프라이빗 키 파싱
 	privKey, err := parseRSAPrivateKeyFromPEM(m.CloudfrontSecret)
@@ -103,7 +104,7 @@ func signPolicyRSA_SHA1(policy []byte, privateKey *rsa.PrivateKey) (string, erro
 	if err != nil {
 		return "", err
 	}
-	return base64.RawURLEncoding.EncodeToString(signature), nil
+	return toCloudFrontB64(signature), nil
 }
 
 func parseRSAPrivateKeyFromPEM(keyPEM string) (*rsa.PrivateKey, error) {
@@ -125,4 +126,10 @@ func parseRSAPrivateKeyFromPEM(keyPEM string) (*rsa.PrivateKey, error) {
 		return rsaPriv, nil
 	}
 	return priv, nil
+}
+
+func toCloudFrontB64(b []byte) string {
+	std := base64.StdEncoding.EncodeToString(b)
+	repl := strings.NewReplacer("+", "-", "=", "_", "/", "~")
+	return repl.Replace(std)
 }

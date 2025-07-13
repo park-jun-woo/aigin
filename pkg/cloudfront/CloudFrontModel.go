@@ -6,7 +6,6 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
@@ -82,7 +81,7 @@ func (m *CloudFrontModel) CreateSignedCookies(resourceURL string, expireAt time.
 	}
 
 	// 3. 정책에 서명 (RSA SHA1)
-	signature, err := signPolicyRSA_SHA256(policyJson, privKey)
+	signature, err := signPolicyRSA_SHA1(policyJson, privKey)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +94,7 @@ func (m *CloudFrontModel) CreateSignedCookies(resourceURL string, expireAt time.
 	}, nil
 }
 
-/*func signPolicyRSA_SHA1(policy []byte, privateKey *rsa.PrivateKey) (string, error) {
+func signPolicyRSA_SHA1(policy []byte, privateKey *rsa.PrivateKey) (string, error) {
 	hashed := crypto.SHA1.New()
 	hashed.Write(policy)
 	digest := hashed.Sum(nil)
@@ -105,15 +104,6 @@ func (m *CloudFrontModel) CreateSignedCookies(resourceURL string, expireAt time.
 		return "", err
 	}
 	return base64.RawURLEncoding.EncodeToString(signature), nil
-}*/
-
-func signPolicyRSA_SHA256(policy []byte, pk *rsa.PrivateKey) (string, error) {
-	sum := sha256.Sum256(policy)
-	sig, err := rsa.SignPKCS1v15(rand.Reader, pk, crypto.SHA256, sum[:])
-	if err != nil {
-		return "", err
-	}
-	return base64.RawURLEncoding.EncodeToString(sig), nil
 }
 
 func parseRSAPrivateKeyFromPEM(keyPEM string) (*rsa.PrivateKey, error) {

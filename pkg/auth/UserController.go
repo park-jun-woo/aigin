@@ -130,13 +130,16 @@ func (ctrl *UserController) SigninCallback(c *gin.Context) {
 
 // OAuth2 로그아웃 핸들러
 func (ctrl *UserController) Signout(c *gin.Context) {
+	c.SetCookie("t", "", -1, "/", ctrl.Servername, true, true)
+	c.SetCookie("r", "", -1, "/", ctrl.Servername, true, true)
+	c.SetCookie("CloudFront-Key-Pair-Id", "", -1, "/", ctrl.Servername, true, true)
+	c.SetCookie("CloudFront-Policy", "", -1, "/", ctrl.Servername, true, true)
+	c.SetCookie("CloudFront-Signature", "", -1, "/", ctrl.Servername, true, true)
 	c.Redirect(http.StatusFound, ctrl.SignoutURI)
 }
 
 // OAuth2 로그아웃 콜백 핸들러 (필요시 추가로직 구현)
 func (ctrl *UserController) SignoutCallback(c *gin.Context) {
-	c.SetCookie("t", "", -1, "/", ctrl.Servername, true, true)
-	c.SetCookie("r", "", -1, "/", ctrl.Servername, true, true)
 	c.Redirect(http.StatusFound, "/")
 }
 

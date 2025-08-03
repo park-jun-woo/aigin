@@ -1,11 +1,11 @@
-// parkjunwoo.com/microstral/pkg/param/param.go
+// parkjunwoo.com/aigin/pkg/param/param.go
 package param
 
 import (
 	"fmt"
 	"regexp"
 
-	"parkjunwoo.com/microstral/pkg/flag"
+	"parkjunwoo.com/aigin/pkg/flag"
 )
 
 type Param struct {

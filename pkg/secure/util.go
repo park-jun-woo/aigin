@@ -1,4 +1,4 @@
-// parkjunwoo.com/microstral/pkg/secure/util.go
+// parkjunwoo.com/aigin/pkg/secure/util.go
 package secure
 
 import (

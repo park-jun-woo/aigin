@@ -18,8 +18,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/lib/pq"
 
-	"parkjunwoo.com/microstral/pkg/env"
-	"parkjunwoo.com/microstral/pkg/secure"
+	"parkjunwoo.com/aigin/pkg/env"
+	"parkjunwoo.com/aigin/pkg/secure"
 )
 
 type CognitoModel struct {

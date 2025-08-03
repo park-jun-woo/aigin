@@ -14,9 +14,9 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"parkjunwoo.com/microstral/pkg/cloudfront"
-	"parkjunwoo.com/microstral/pkg/env"
-	"parkjunwoo.com/microstral/pkg/param"
+	"parkjunwoo.com/aigin/pkg/cloudfront"
+	"parkjunwoo.com/aigin/pkg/env"
+	"parkjunwoo.com/aigin/pkg/param"
 )
 
 type UserController struct {

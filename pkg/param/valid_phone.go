@@ -1,4 +1,4 @@
-// parkjunwoo.com/microstral/pkg/param/valid_phone.go
+// parkjunwoo.com/aigin/pkg/param/valid_phone.go
 package param
 
 import (

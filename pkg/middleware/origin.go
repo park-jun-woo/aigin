@@ -1,4 +1,4 @@
-// parkjunwoo.com/microstral/pkg/middleware/origin.go
+// parkjunwoo.com/aigin/pkg/middleware/origin.go
 package middleware
 
 import (
@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"parkjunwoo.com/microstral/pkg/env"
+	"parkjunwoo.com/aigin/pkg/env"
 )
 
 func Origin() gin.HandlerFunc {

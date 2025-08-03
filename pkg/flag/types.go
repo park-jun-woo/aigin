@@ -1,4 +1,4 @@
-// parkjunwoo.com/microstral/pkg/flag/types.go
+// parkjunwoo.com/aigin/pkg/flag/types.go
 package flag
 
 // 기본적인 숫자/불리언 파라미터 타입들

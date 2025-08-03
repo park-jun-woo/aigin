@@ -1,4 +1,4 @@
-module parkjunwoo.com/microstral
+module parkjunwoo.com/aigin
 
 go 1.24.2
 

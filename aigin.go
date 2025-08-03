@@ -1,5 +1,5 @@
-// parkjunwoo.com/microstral/mist.go
-package mist
+// parkjunwoo.com/aigin/aigin.go
+package aigin
 
 import (
 	"context"
@@ -19,9 +19,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 
-	"parkjunwoo.com/microstral/pkg/env"
-	"parkjunwoo.com/microstral/pkg/mttp"
-	"parkjunwoo.com/microstral/pkg/services"
+	"parkjunwoo.com/aigin/pkg/env"
+	"parkjunwoo.com/aigin/pkg/mttp"
+	"parkjunwoo.com/aigin/pkg/services"
 )
 
 type Config struct {
@@ -34,7 +34,7 @@ type Config struct {
 	https     bool
 }
 
-type Mist struct {
+type AIgin struct {
 	cfg   Config
 	conns []interface {
 		Close() error
@@ -44,8 +44,8 @@ type Mist struct {
 	awsCfg aws.Config
 }
 
-// New: Mist 서버 생성자
-func New(http bool, https bool) (*Mist, error) {
+// New: AIgin 서버 생성자
+func New(http bool, https bool) (*AIgin, error) {
 	httpc := mttp.NewClient()
 
 	region := env.GetEnv("REGION", "ap-northeast-2")
@@ -54,9 +54,9 @@ func New(http bool, https bool) (*Mist, error) {
 		return nil, err
 	}
 
-	s := &Mist{
+	s := &AIgin{
 		cfg: Config{
-			host:      env.GetEnv("HOST", "mist"),
+			host:      env.GetEnv("HOST", "aigin"),
 			httpsport: env.GetEnvInt("HTTPS_PORT", 443),
 			httpport:  env.GetEnvInt("HTTP_PORT", 80),
 			fullchain: env.GetEnv("TLS_FULLCHAIN", ""),
@@ -80,7 +80,7 @@ func New(http bool, https bool) (*Mist, error) {
 }
 
 // Run: 서버 실행
-func (s *Mist) Run() error {
+func (s *AIgin) Run() error {
 	errCh := make(chan error, 2)
 	var httpsServer, httpServer *http.Server
 
@@ -147,64 +147,64 @@ func (s *Mist) Run() error {
 	return nil
 }
 
-func (s *Mist) GetHost() string {
+func (s *AIgin) GetHost() string {
 	return s.cfg.host
 }
 
-func (s *Mist) GetHTTPSPort() int {
+func (s *AIgin) GetHTTPSPort() int {
 	return s.cfg.httpsport
 }
 
-func (s *Mist) GetHTTPPort() int {
+func (s *AIgin) GetHTTPPort() int {
 	return s.cfg.httpport
 }
 
-func (s *Mist) GetRouter() *gin.Engine {
+func (s *AIgin) GetRouter() *gin.Engine {
 	return s.router
 }
 
-func (s *Mist) GetHTTP() *mttp.Client {
+func (s *AIgin) GetHTTP() *mttp.Client {
 	return s.httpc
 }
 
-func (s *Mist) Use(handlers ...gin.HandlerFunc) gin.IRoutes {
+func (s *AIgin) Use(handlers ...gin.HandlerFunc) gin.IRoutes {
 	return s.router.Use(handlers...)
 }
 
-func (s *Mist) GET(relativePath string, handlers ...gin.HandlerFunc) gin.IRoutes {
+func (s *AIgin) GET(relativePath string, handlers ...gin.HandlerFunc) gin.IRoutes {
 	return s.router.GET(relativePath, handlers...)
 }
 
-func (s *Mist) POST(relativePath string, handlers ...gin.HandlerFunc) gin.IRoutes {
+func (s *AIgin) POST(relativePath string, handlers ...gin.HandlerFunc) gin.IRoutes {
 	return s.router.POST(relativePath, handlers...)
 }
 
-func (s *Mist) PUT(relativePath string, handlers ...gin.HandlerFunc) gin.IRoutes {
+func (s *AIgin) PUT(relativePath string, handlers ...gin.HandlerFunc) gin.IRoutes {
 	return s.router.PUT(relativePath, handlers...)
 }
 
-func (s *Mist) DELETE(relativePath string, handlers ...gin.HandlerFunc) gin.IRoutes {
+func (s *AIgin) DELETE(relativePath string, handlers ...gin.HandlerFunc) gin.IRoutes {
 	return s.router.DELETE(relativePath, handlers...)
 }
 
-func (s *Mist) PATCH(relativePath string, handlers ...gin.HandlerFunc) gin.IRoutes {
+func (s *AIgin) PATCH(relativePath string, handlers ...gin.HandlerFunc) gin.IRoutes {
 	return s.router.PATCH(relativePath, handlers...)
 }
 
-func (s *Mist) OPTIONS(relativePath string, handlers ...gin.HandlerFunc) gin.IRoutes {
+func (s *AIgin) OPTIONS(relativePath string, handlers ...gin.HandlerFunc) gin.IRoutes {
 	return s.router.OPTIONS(relativePath, handlers...)
 }
 
-func (s *Mist) HEAD(relativePath string, handlers ...gin.HandlerFunc) gin.IRoutes {
+func (s *AIgin) HEAD(relativePath string, handlers ...gin.HandlerFunc) gin.IRoutes {
 	return s.router.HEAD(relativePath, handlers...)
 }
 
-func (s *Mist) Postgres() (*sql.DB, error) {
+func (s *AIgin) Postgres() (*sql.DB, error) {
 	//Postgres 연결
 	host := env.GetEnv("POSTGRES_HOST", "db")
 	port := env.GetEnvInt("POSTGRES_PORT", 5432)
-	dbname := env.GetEnv("POSTGRES_DB", "mist")
-	username := env.GetEnv("POSTGRES_USERNAME", "mist")
+	dbname := env.GetEnv("POSTGRES_DB", "aigin")
+	username := env.GetEnv("POSTGRES_USERNAME", "aigin")
 	password := env.GetEnv("POSTGRES_PASSWORD", "")
 	openConns := env.GetEnvInt("POSTGRES_OPEN_CONNS", 15)
 	maxIdleConns := env.GetEnvInt("POSTGRES_MAX_IDLE_CONNS", 15)
@@ -233,7 +233,7 @@ func (s *Mist) Postgres() (*sql.DB, error) {
 	return conn, nil
 }
 
-func (s *Mist) Redis() (*redis.Client, error) {
+func (s *AIgin) Redis() (*redis.Client, error) {
 	//REDIS 연결
 	host := env.GetEnv("REDIS_HOST", "redis")
 	port := env.GetEnvInt("REDIS_PORT", 6379)

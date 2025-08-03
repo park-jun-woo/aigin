@@ -1,4 +1,4 @@
-// parkjunwoo.com/microstral/pkg/param/valid_content.go
+// parkjunwoo.com/aigin/pkg/param/valid_content.go
 package param
 
 import (

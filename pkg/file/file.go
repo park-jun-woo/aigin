@@ -1,4 +1,4 @@
-// parkjunwoo.com/microstral/pkg/file/file.go
+// parkjunwoo.com/aigin/pkg/file/file.go
 package file
 
 import (

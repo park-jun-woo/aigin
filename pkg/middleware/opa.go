@@ -1,4 +1,4 @@
-// parkjunwoo.com/microstral/pkg/middleware/opa.go
+// parkjunwoo.com/aigin/pkg/middleware/opa.go
 package middleware
 
 import (
@@ -9,9 +9,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/open-policy-agent/opa/v1/rego"
-	"parkjunwoo.com/microstral/pkg/auth"
-	"parkjunwoo.com/microstral/pkg/env"
-	"parkjunwoo.com/microstral/pkg/file"
+	"parkjunwoo.com/aigin/pkg/auth"
+	"parkjunwoo.com/aigin/pkg/env"
+	"parkjunwoo.com/aigin/pkg/file"
 )
 
 var (

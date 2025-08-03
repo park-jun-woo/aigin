@@ -1,20 +1,20 @@
-// parkjunwoo.com/microstral/test/test.go
+// parkjunwoo.com/aigin/test/test.go
 package test
 
 import (
 	"context"
 
 	"github.com/aws/aws-sdk-go-v2/config"
-	mist "parkjunwoo.com/microstral"
-	"parkjunwoo.com/microstral/pkg/auth"
-	"parkjunwoo.com/microstral/pkg/cloudfront"
-	"parkjunwoo.com/microstral/pkg/env"
-	"parkjunwoo.com/microstral/pkg/middleware"
+	aigin "parkjunwoo.com/aigin"
+	"parkjunwoo.com/aigin/pkg/auth"
+	"parkjunwoo.com/aigin/pkg/cloudfront"
+	"parkjunwoo.com/aigin/pkg/env"
+	"parkjunwoo.com/aigin/pkg/middleware"
 )
 
 func main() {
-	// Mist 서버 생성
-	s, err := mist.New(false, true)
+	// AIgin 서버 생성
+	s, err := aigin.New(false, true)
 	if err != nil {
 		panic(err)
 	}

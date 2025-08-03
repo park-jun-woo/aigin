@@ -1,4 +1,4 @@
-// parkjunwoo.com/microstral/pkg/env/env.go
+// parkjunwoo.com/aigin/pkg/env/env.go
 package env
 
 import (

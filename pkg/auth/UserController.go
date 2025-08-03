@@ -1,7 +1,8 @@
-// internal/auth/UserController.go
+// pkg/auth/UserController.go
 package auth
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
@@ -272,7 +273,7 @@ func (ctrl *UserController) GetUsers(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 			return
 		}
-		exists, err := ctrl.GroupModel.Exists(ctx, group)
+		exists, err := ctrl.GroupModel.Exists(ctx, "users", group)
 		if err != nil {
 			log.Printf("[WARN] error checking group existence: %q (%v)", group, err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
@@ -288,7 +289,7 @@ func (ctrl *UserController) GetUsers(c *gin.Context) {
 	result, err := ctrl.UserModel.GetUsers(ctx, limit, page, order, desc, search, group)
 	if err != nil {
 		log.Printf("[ERROR] failed to get articles: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("error: %v", err)})
 		return
 	}
 
@@ -526,8 +527,7 @@ func (ctrl *UserController) PutUser(c *gin.Context) {
 
 	_, err2 := ctrl.UserModel.PutUser(
 		ctx, id, name, email, user.EmailVerified,
-		user.Status, user.CreatedAt, user.UpdatedAt, user.DeletedAt,
-		claims.ID, claims.Name,
+		user.Status, user.UpdatedAt, claims.ID, claims.Name,
 	)
 	if err2 != nil {
 		log.Printf("[ERROR] failed to update user: %v", err2)
@@ -536,4 +536,89 @@ func (ctrl *UserController) PutUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "user updated successfully"})
+}
+
+func (ctrl *UserController) SyncUser() {
+	ctx := context.TODO()
+	// 1) Cognito(인증 시스템)·DB 사용자 전량 로드
+	authUsers, err := ctrl.AuthModel.AllUsers(ctx)
+	if err != nil {
+		log.Printf("failed to get users from auth provider: %v", err)
+		return
+	}
+	dbUsers, err := ctrl.UserModel.AllUsers(ctx)
+	if err != nil {
+		log.Printf("failed to get users from database: %v", err)
+		return
+	}
+	// 2) map[id]User 편의 구조로 변환
+	authMap := make(map[string]UsersItem, len(authUsers.Items))
+	for _, u := range authUsers.Items {
+		authMap[u.ID] = u
+	}
+	dbMap := make(map[string]UsersItem, len(dbUsers.Items))
+	for _, u := range dbUsers.Items {
+		dbMap[u.ID] = u
+	}
+	// 3) 삽입·업데이트 대상 계산
+	var toInsert, toUpdate []UsersItem
+	for id, au := range authMap {
+		if du, ok := dbMap[id]; !ok {
+			toInsert = append(toInsert, au)
+		} else if userDiff(au, du) { // 이름/메일/상태/verify 등 달라진 것
+			toUpdate = append(toUpdate, au)
+		}
+		delete(dbMap, id) // dbMap 에 남는 건 “삭제 후보”
+	}
+	// 4) 배치 INSERT
+	for _, u := range toInsert {
+		if _, err := ctrl.UserModel.PostUser(
+			ctx, u.ID, u.Name, u.Email, u.EmailVerified,
+			u.Status, u.CreatedAt, u.UpdatedAt, u.DeletedAt,
+			"SYSTEM", "시스템",
+		); err != nil {
+			log.Printf("failed to insert user %s: %v", u.ID, err)
+		}
+	}
+	// 5) 배치 UPDATE
+	for _, u := range toUpdate {
+		if _, err := ctrl.UserModel.PutUser(
+			ctx, u.ID, u.Name, u.Email, u.EmailVerified,
+			u.Status, u.UpdatedAt, "SYSTEM", "시스템",
+		); err != nil {
+			log.Printf("failed to update user %s: %v", u.ID, err)
+		}
+	}
+	// 6) 그룹 동기화 (삽입·업데이트 후)
+	for _, u := range authUsers.Items {
+		if _, err := ctrl.UserModel.SyncGroup(
+			ctx, u.ID, u.Groups, "SYSTEM", "시스템",
+		); err != nil {
+			log.Printf("failed to sync groups for %s: %v", u.ID, err)
+		}
+	}
+	// 7) (선택) Cognito 에는 없고 DB 에만 남은 계정 처리
+	for orphanID := range dbMap { // dbMap 에 남아 있는 id = 삭제 후보
+		// 여기서는 하드 삭제 대신 상태만 DELETED 로 두는 예
+		if _, err := ctrl.UserModel.DeleteUser(
+			ctx, orphanID, "SYSTEM", "시스템",
+		); err != nil {
+			log.Printf("failed to mark deleted %s: %v", orphanID, err)
+		}
+	}
+	log.Println("UserController SyncUser() Complete!")
+}
+
+// ------------------------------------------------------------------
+// userDiff 는 두 레코드의 “업데이트 필요 여부” 판정 함수
+// 필요한 필드만 비교하면 됩니다.
+func userDiff(a, b UsersItem) bool {
+	if a.Name != b.Name ||
+		a.Email != b.Email ||
+		a.EmailVerified != b.EmailVerified ||
+		a.Status != b.Status {
+		return true
+	}
+	// 그룹 배열 비교는 SyncGroup 이 따로 처리하므로 생략
+	return false
 }

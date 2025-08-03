@@ -1,4 +1,4 @@
-// internal/auth/types.go
+// pkg/auth/types.go
 package auth
 
 import (
@@ -18,7 +18,7 @@ type AuthProviderModel interface {
 	// 토큰 갱신
 	RefreshToken(ctx context.Context, refreshToken string) (*TokenResponse, error)
 	// 전체 사용자 목록 조회
-	GetUsers(ctx context.Context) (*AllUsers, error)
+	AllUsers(ctx context.Context) (*AllUsers, error)
 	// 사용자 조회
 	GetUser(ctx context.Context, id string) (*UsersItem, error)
 	// 특정 사용자 그룹 목록 조회
@@ -89,4 +89,13 @@ type TokenResponse struct {
 	RefreshToken string `json:"refresh_token"`
 	ExpiresIn    int    `json:"expires_in"`
 	TokenType    string `json:"token_type"`
+}
+
+type GroupsItem struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
+type AllGroups struct {
+	Items []GroupsItem `json:"items"`
 }

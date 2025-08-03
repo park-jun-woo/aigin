@@ -1,4 +1,4 @@
-// internal/auth/CognitoModel.go
+// pkg/auth/CognitoModel.go
 package auth
 
 import (
@@ -276,7 +276,7 @@ func (m *CognitoModel) RefreshToken(ctx context.Context, refreshToken string) (*
 	return &tokenRes, nil
 }
 
-func (m *CognitoModel) GetUsers(ctx context.Context) (*AllUsers, error) {
+func (m *CognitoModel) AllUsers(ctx context.Context) (*AllUsers, error) {
 	var users []UsersItem
 
 	input := &cognitoidentityprovider.ListUsersInput{
